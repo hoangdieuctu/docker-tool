@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DOCKER TOOL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="noise"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-brand">
+        <span class="header-title">DOCKER TOOL</span>
+        <span class="header-version">v1.0.0</span>
+      </div>
+      <div class="header-meta" id="header-meta">
+        <span class="meta-dot"></span>
+        <span id="service-count">— services</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-success" id="btn-up-all" title="docker compose up -d">
+        <span class="btn-label">UP ALL</span>
+      </button>
+      <button class="btn btn-danger" id="btn-down-all" title="docker compose down">
+        <span class="btn-label">DOWN ALL</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-refresh" title="Refresh status">
+        <span class="btn-label">REFRESH</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-raw-yaml" title="View/edit raw compose YAML">
+        <span class="btn-label">RAW YAML</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-vol-net" title="Manage volumes and networks">
+        <span class="btn-label">VOL / NET</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-history" title="Version history">
+        <span class="btn-label">HISTORY</span>
+      </button>
+    </div>
+  </header>
+  <div class="header-accent-line"></div>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+
+    <!-- Cards View -->
+    <div id="cards-view">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <span class="toolbar-label" id="running-count">loading...</span>
+        </div>
+        <div class="toolbar-center">
+          <input type="text" class="search-input" id="service-search" placeholder="SEARCH SERVICES..." autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-add" id="btn-add-service">
+            <span>ADD SERVICE +</span>
+          </button>
+        </div>
+      </div>
+      <div class="cards-grid" id="cards-grid">
+        <!-- Skeleton cards on load -->
+        <div class="card skeleton"></div>
+        <div class="card skeleton"></div>
+        <div class="card skeleton"></div>
+      </div>
+    </div>
+
+    <!-- YAML View -->
+    <div id="yaml-view" class="yaml-view hidden">
+      <div class="yaml-toolbar">
+        <span class="yaml-title">RAW COMPOSE YAML</span>
+        <div class="yaml-actions">
+          <button class="btn btn-success" id="btn-save-yaml">
+            <span class="btn-label">SAVE YAML</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-cancel-yaml">
+            <span class="btn-label">CANCEL</span>
+          </button>
+        </div>
+      </div>
+      <div class="yaml-editor-wrap">
+        <textarea class="yaml-editor" id="yaml-editor" spellcheck="false"></textarea>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Logs Modal -->
+  <div class="modal-overlay hidden" id="logs-modal" role="dialog" aria-modal="true" aria-labelledby="logs-modal-title">
+    <div class="modal modal-logs">
+      <div class="modal-header">
+        <span class="modal-title" id="logs-modal-title">LOGS — <span id="logs-service-name"></span></span>
+        <div class="modal-header-actions">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-logs">
+            <span class="btn-label">REFRESH LOGS</span>
+          </button>
+          <button class="modal-close" id="logs-close" aria-label="Close">&times;</button>
+        </div>
+      </div>
+      <div class="logs-body">
+        <pre class="logs-output" id="logs-output"><span class="logs-placeholder">Loading logs...</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Service Modal -->
+  <div class="modal-overlay hidden" id="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal modal-edit">
+      <div class="modal-header">
+        <span class="modal-title" id="edit-modal-title">EDIT SERVICE — <span id="edit-service-name"></span></span>
+        <button class="modal-close" id="edit-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="edit-modal-body">
+        <div class="form-group">
+          <label class="form-label">IMAGE</label>
+          <input type="text" class="form-input" id="edit-image" placeholder="nginx:latest" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CONTAINER NAME</label>
+          <input type="text" class="form-input" id="edit-container-name" placeholder="Optional container name override" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PORTS</label>
+          <div class="dynamic-list" id="edit-ports-list"></div>
+          <button class="btn-add-row" id="btn-add-port">+ ADD PORT</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EXPOSE</label>
+          <div class="dynamic-list" id="edit-expose-list"></div>
+          <button class="btn-add-row" id="btn-add-expose">+ ADD EXPOSE</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENVIRONMENT</label>
+          <div class="dynamic-list" id="edit-env-list"></div>
+          <button class="btn-add-row" id="btn-add-env">+ ADD ENV VAR</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENV FILE</label>
+          <div class="dynamic-list" id="edit-envfile-list"></div>
+          <button class="btn-add-row" id="btn-add-envfile">+ ADD ENV FILE</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">VOLUMES</label>
+          <div class="dynamic-list" id="edit-volumes-list"></div>
+          <button class="btn-add-row" id="btn-add-volume-mount">+ ADD VOLUME</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">NETWORKS</label>
+          <div class="dynamic-list" id="edit-networks-list"></div>
+          <button class="btn-add-row" id="btn-add-network-join">+ ADD NETWORK</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">RESTART POLICY</label>
+          <select class="form-select" id="edit-restart">
+            <option value="no">no</option>
+            <option value="always">always</option>
+            <option value="unless-stopped">unless-stopped</option>
+            <option value="on-failure">on-failure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">COMMAND</label>
+          <input type="text" class="form-input" id="edit-command" placeholder="Optional command override" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" id="btn-save-edit">
+          <span class="btn-label">SAVE CHANGES</span>
+        </button>
+        <button class="btn btn-danger" id="btn-delete-service">
+          <span class="btn-label">DELETE SERVICE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Service Modal -->
+  <div class="modal-overlay hidden" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
+    <div class="modal modal-edit">
+      <div class="modal-header">
+        <span class="modal-title" id="add-modal-title">ADD NEW SERVICE</span>
+        <button class="modal-close" id="add-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="add-modal-body">
+        <div class="form-group">
+          <label class="form-label">NAME <span class="required">*</span></label>
+          <input type="text" class="form-input" id="add-name" placeholder="my-service" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">IMAGE <span class="required">*</span></label>
+          <input type="text" class="form-input" id="add-image" placeholder="nginx:latest" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CONTAINER NAME</label>
+          <input type="text" class="form-input" id="add-container-name" placeholder="Optional container name override" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PORTS</label>
+          <div class="dynamic-list" id="add-ports-list"></div>
+          <button class="btn-add-row" id="btn-add-port-new">+ ADD PORT</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EXPOSE</label>
+          <div class="dynamic-list" id="add-expose-list"></div>
+          <button class="btn-add-row" id="btn-add-expose-new">+ ADD EXPOSE</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENVIRONMENT</label>
+          <div class="dynamic-list" id="add-env-list"></div>
+          <button class="btn-add-row" id="btn-add-env-new">+ ADD ENV VAR</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENV FILE</label>
+          <div class="dynamic-list" id="add-envfile-list"></div>
+          <button class="btn-add-row" id="btn-add-envfile-new">+ ADD ENV FILE</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">VOLUMES</label>
+          <div class="dynamic-list" id="add-volumes-list"></div>
+          <button class="btn-add-row" id="btn-add-volume-new">+ ADD VOLUME</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">NETWORKS</label>
+          <div class="dynamic-list" id="add-networks-list"></div>
+          <button class="btn-add-row" id="btn-add-network-new">+ ADD NETWORK</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">RESTART POLICY</label>
+          <select class="form-select" id="add-restart">
+            <option value="no">no</option>
+            <option value="always">always</option>
+            <option value="unless-stopped">unless-stopped</option>
+            <option value="on-failure">on-failure</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">COMMAND</label>
+          <input type="text" class="form-input" id="add-command" placeholder="Optional command override" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" id="btn-create-service">
+          <span class="btn-label">CREATE SERVICE</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Volumes & Networks Modal -->
+  <div class="modal-overlay hidden" id="volnet-modal" role="dialog" aria-modal="true" aria-labelledby="volnet-modal-title">
+    <div class="modal modal-volnet">
+      <div class="modal-header">
+        <span class="modal-title" id="volnet-modal-title">VOLUMES &amp; NETWORKS</span>
+        <button class="modal-close" id="volnet-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="volnet-tabs">
+        <button class="volnet-tab active" data-tab="volumes">NAMED VOLUMES</button>
+        <button class="volnet-tab" data-tab="networks">NETWORKS</button>
+      </div>
+      <div class="volnet-body">
+        <!-- Volumes Tab -->
+        <div class="volnet-panel" id="volnet-panel-volumes">
+          <div class="volnet-list" id="volnet-volumes-list"></div>
+          <div class="volnet-add-form">
+            <input type="text" class="form-input" id="volnet-vol-name" placeholder="volume-name" />
+            <input type="text" class="form-input" id="volnet-vol-driver" placeholder="driver (optional)" />
+            <label class="volnet-external-label">
+              <input type="checkbox" id="volnet-vol-external" /> external
+            </label>
+            <button class="btn btn-success btn-sm" id="btn-add-volume">
+              <span class="btn-label">ADD</span>
+            </button>
+          </div>
+        </div>
+        <!-- Networks Tab -->
+        <div class="volnet-panel hidden" id="volnet-panel-networks">
+          <div class="volnet-list" id="volnet-networks-list"></div>
+          <div class="volnet-add-form">
+            <input type="text" class="form-input" id="volnet-net-name" placeholder="network-name" />
+            <input type="text" class="form-input" id="volnet-net-driver" placeholder="driver (optional, e.g. bridge)" />
+            <label class="volnet-external-label">
+              <input type="checkbox" id="volnet-net-external" /> external
+            </label>
+            <button class="btn btn-success btn-sm" id="btn-add-network">
+              <span class="btn-label">ADD</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal-overlay hidden" id="history-modal" role="dialog" aria-modal="true" aria-labelledby="history-modal-title">
+    <div class="modal modal-history">
+      <div class="modal-header">
+        <span class="modal-title" id="history-modal-title">VERSION HISTORY</span>
+        <button class="modal-close" id="history-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="history-body">
+        <div class="history-list" id="history-list">
+          <div class="history-placeholder">Loading...</div>
+        </div>
+        <div class="history-preview" id="history-preview">
+          <div class="history-preview-empty">Select a version to preview</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div class="modal-overlay hidden" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal modal-confirm">
+      <div class="confirm-icon" id="confirm-icon"></div>
+      <h2 class="confirm-title" id="confirm-title"></h2>
+      <p class="confirm-message" id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" id="confirm-cancel">CANCEL</button>
+        <button class="btn" id="confirm-ok"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

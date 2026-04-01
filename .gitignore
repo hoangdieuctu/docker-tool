@@ -1,0 +1,10 @@
+node_modules/
+db1/
+db2/
+db3/
+db4/
+compose-history.json
+.claude/
+claude.md
+*.log
+watch_*
