@@ -394,7 +394,7 @@ body {
 /* ── Cards Grid ──────────────────────────────────────────────── */
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 
@@ -498,7 +498,6 @@ body {
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--text-primary);
-  text-transform: uppercase;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1105,7 +1104,7 @@ body {
 
 .volnet-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
@@ -1119,6 +1118,8 @@ body {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .volnet-item-name {
@@ -1138,6 +1139,13 @@ body {
   font-family: var(--font-mono);
   font-size: 0.68rem;
   color: var(--amber);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.volnet-delete-btn {
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 .volnet-loading,

@@ -1,6 +1,6 @@
 {
   "name": "docker-tool",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Web UI for managing docker-compose",
   "main": "server/index.js",
   "scripts": {

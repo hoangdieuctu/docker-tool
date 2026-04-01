@@ -1,20 +1,28 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const appConfig = require('./config');
 
-const HISTORY_FILE = path.resolve(__dirname, '../compose-history.json');
 const MAX_VERSIONS = 50;
 
+function historyFile() {
+  const composePath = appConfig.load().composePath;
+  const hash = crypto.createHash('md5').update(composePath).digest('hex').slice(0, 8);
+  return path.resolve(__dirname, `../compose-history-${hash}.json`);
+}
+
 function load() {
-  if (!fs.existsSync(HISTORY_FILE)) return [];
+  const file = historyFile();
+  if (!fs.existsSync(file)) return [];
   try {
-    return JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf8'));
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch {
     return [];
   }
 }
 
 function save(versions) {
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(versions, null, 2), 'utf8');
+  fs.writeFileSync(historyFile(), JSON.stringify(versions, null, 2), 'utf8');
 }
 
 function snapshot(yaml, label) {
@@ -36,4 +44,8 @@ function get(id) {
   return v;
 }
 
-module.exports = { snapshot, list, get };
+function clear() {
+  save([]);
+}
+
+module.exports = { snapshot, list, get, clear };

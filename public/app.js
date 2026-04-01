@@ -630,7 +630,18 @@ async function openEditModal(serviceName) {
 
   document.getElementById('edit-service-name').textContent = serviceName;
   document.getElementById('edit-image').value          = svc.image   || '';
+  document.getElementById('edit-platform').value       = svc.platform || '';
+  // If value not in select options, add it
+  const editPlatformEl = document.getElementById('edit-platform');
+  if (svc.platform && !Array.from(editPlatformEl.options).some(o => o.value === svc.platform)) {
+    const opt = document.createElement('option');
+    opt.value = svc.platform;
+    opt.textContent = svc.platform;
+    editPlatformEl.appendChild(opt);
+  }
+  editPlatformEl.value = svc.platform || '';
   document.getElementById('edit-container-name').value = svc.container_name || '';
+  document.getElementById('edit-working-dir').value    = svc.working_dir || '';
   document.getElementById('edit-command').value = Array.isArray(svc.command)
     ? svc.command.join(' ')
     : (svc.command || '');
@@ -658,6 +669,9 @@ async function openEditModal(serviceName) {
   // Networks
   const nets = Array.isArray(svc.networks) ? svc.networks.map(String) : [];
   renderDynamicList('edit-networks-list', nets, 'network');
+
+  // Depends on
+  renderDynamicList('edit-depends-on-list', (svc.depends_on || []).map(String), 'dependson');
 
   document.getElementById('edit-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -706,6 +720,9 @@ document.getElementById('btn-add-envfile').addEventListener('click', () => {
 });
 document.getElementById('btn-add-network-join').addEventListener('click', () => {
   addDynamicRow('edit-networks-list', 'network');
+});
+document.getElementById('btn-add-depends-on').addEventListener('click', () => {
+  addDynamicRow('edit-depends-on-list', 'dependson');
 });
 
 // ── Validation ───────────────────────────────────────────────
@@ -852,7 +869,9 @@ document.getElementById('btn-save-edit').addEventListener('click', async () => {
   if (!name) return;
 
   const image          = document.getElementById('edit-image').value.trim();
+  const platform       = document.getElementById('edit-platform').value.trim();
   const containerName  = document.getElementById('edit-container-name').value.trim();
+  const workingDir     = document.getElementById('edit-working-dir').value.trim();
   const command  = document.getElementById('edit-command').value.trim();
   const restart  = document.getElementById('edit-restart').value;
   const ports    = getDynamicListValues('edit-ports-list');
@@ -861,9 +880,12 @@ document.getElementById('btn-save-edit').addEventListener('click', async () => {
   const envFiles = getDynamicListValues('edit-envfile-list');
   const volumes  = getDynamicListValues('edit-volumes-list');
   const networks = getDynamicListValues('edit-networks-list');
+  const dependsOn = getDynamicListValues('edit-depends-on-list');
 
   const body = {};
   if (image)         body.image          = image;
+  if (platform)      body.platform       = platform;
+  else               body.platform       = null;
   if (containerName) body.container_name = containerName;
   else               body.container_name = null;
   if (command)  body.command  = command;
@@ -880,6 +902,10 @@ document.getElementById('btn-save-edit').addEventListener('click', async () => {
   else                  body.volumes     = null;
   if (networks.length)  body.networks    = networks;
   else                  body.networks    = null;
+  if (dependsOn.length) body.depends_on  = dependsOn;
+  else                  body.depends_on  = null;
+  if (workingDir)       body.working_dir = workingDir;
+  else                  body.working_dir = null;
 
   const errors = await validateServiceConfig({ name, image, containerName, ports, expose, envRaw, volumes, networks, isCreate: false, currentServiceName: name });
   showValidationErrors('edit-modal-body', errors);
@@ -945,6 +971,8 @@ async function openCopyModal(serviceName) {
   document.getElementById('add-name').value           = `copy-of-${serviceName}`;
   document.getElementById('add-image').value          = svc.image || '';
   document.getElementById('add-container-name').value = ''; // don't copy container_name — must be unique
+  document.getElementById('add-working-dir').value = svc.working_dir || '';
+  document.getElementById('add-platform').value    = svc.platform || '';
   document.getElementById('add-command').value = Array.isArray(svc.command)
     ? svc.command.join(' ')
     : (svc.command || '');
@@ -955,6 +983,7 @@ async function openCopyModal(serviceName) {
   renderDynamicList('add-envfile-list', (svc.env_file || []).map(String), 'envfile');
   renderDynamicList('add-volumes-list', (svc.volumes || []).map(String), 'volume');
   renderDynamicList('add-networks-list', (svc.networks || []).map(String), 'network');
+  renderDynamicList('add-depends-on-list', (svc.depends_on || []).map(String), 'dependson');
 
   document.getElementById('add-modal-title').textContent = `COPY SERVICE — ${serviceName}`;
   document.getElementById('add-modal').classList.remove('hidden');
@@ -969,6 +998,8 @@ document.getElementById('btn-add-service').addEventListener('click', async () =>
   document.getElementById('add-name').value    = '';
   document.getElementById('add-image').value          = '';
   document.getElementById('add-container-name').value = '';
+  document.getElementById('add-working-dir').value    = '';
+  document.getElementById('add-platform').value       = '';
   document.getElementById('add-command').value = '';
   document.getElementById('add-restart').value = 'no';
   renderDynamicList('add-ports-list', [], 'port');
@@ -977,6 +1008,7 @@ document.getElementById('btn-add-service').addEventListener('click', async () =>
   renderDynamicList('add-envfile-list', [], 'envfile');
   renderDynamicList('add-volumes-list', [], 'volume');
   renderDynamicList('add-networks-list', [], 'network');
+  renderDynamicList('add-depends-on-list', [], 'dependson');
   document.getElementById('add-modal-title').textContent = 'ADD NEW SERVICE';
   document.getElementById('add-modal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -1026,6 +1058,9 @@ document.getElementById('btn-add-volume-new').addEventListener('click', () => {
 document.getElementById('btn-add-network-new').addEventListener('click', () => {
   addDynamicRow('add-networks-list', 'network');
 });
+document.getElementById('btn-add-depends-on-new').addEventListener('click', () => {
+  addDynamicRow('add-depends-on-list', 'dependson');
+});
 document.getElementById('btn-add-envfile-new').addEventListener('click', () => {
   addDynamicRow('add-envfile-list', 'envfile');
 });
@@ -1037,6 +1072,8 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
   const name          = document.getElementById('add-name').value.trim();
   const image         = document.getElementById('add-image').value.trim();
   const containerName = document.getElementById('add-container-name').value.trim();
+  const workingDir    = document.getElementById('add-working-dir').value.trim();
+  const platform      = document.getElementById('add-platform').value.trim();
   const command  = document.getElementById('add-command').value.trim();
   const restart  = document.getElementById('add-restart').value;
   const ports    = getDynamicListValues('add-ports-list');
@@ -1045,6 +1082,7 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
   const envFiles = getDynamicListValues('add-envfile-list');
   const volumes  = getDynamicListValues('add-volumes-list');
   const networks = getDynamicListValues('add-networks-list');
+  const dependsOn = getDynamicListValues('add-depends-on-list');
 
   if (!name) { toast('Service name is required', 'error'); return; }
   if (!image) { toast('Image is required', 'error'); return; }
@@ -1055,6 +1093,7 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
 
   const body = { name, image };
   if (containerName)                body.container_name = containerName;
+  if (platform)                     body.platform       = platform;
   if (command)                      body.command        = command;
   if (restart && restart !== 'no')  body.restart        = restart;
   if (ports.length)    body.ports       = ports;
@@ -1063,6 +1102,8 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
   if (envFiles.length) body.env_file    = envFiles;
   if (volumes.length)  body.volumes     = volumes;
   if (networks.length) body.networks    = networks;
+  if (dependsOn.length) body.depends_on = dependsOn;
+  if (workingDir)       body.working_dir = workingDir;
 
   btn.disabled = true;
   label.innerHTML = spinnerHtml();
@@ -1102,7 +1143,7 @@ function renderDynamicList(containerId, values, type) {
 function addDynamicRow(containerId, type) {
   const container = document.getElementById(containerId);
   container.appendChild(createDynamicRow('', type));
-  if (type !== 'network') {
+  if (type !== 'network' && type !== 'dependson') {
     const inputs = container.querySelectorAll('input');
     if (inputs.length > 0) inputs[inputs.length - 1].focus();
   }
@@ -1116,7 +1157,11 @@ function createDynamicRow(value, type) {
     return createNetworkRow(value, row);
   }
 
-  const placeholder = type === 'port' ? '8080:80' : type === 'expose' ? '8080' : 'KEY=value';
+  if (type === 'dependson') {
+    return createDependsOnRow(value, row);
+  }
+
+  const placeholder = type === 'port' ? '8080:80' : type === 'expose' ? '8080' : type === 'dependson' ? 'service-name' : 'KEY=value';
 
   const input = document.createElement('input');
   input.type        = 'text';
@@ -1187,6 +1232,49 @@ function createNetworkRow(value, row) {
   hidden.type = 'hidden';
   hidden.className = 'network-value';
   hidden.value = select.value;
+  select.addEventListener('change', () => { hidden.value = select.value; });
+
+  row.appendChild(select);
+  row.appendChild(hidden);
+  row.appendChild(removeBtn);
+  return row;
+}
+
+function createDependsOnRow(value, row) {
+  const currentName = state.editModal.serviceName || null;
+  const services = state.services.map(s => s.name).filter(n => n !== currentName);
+
+  const select = document.createElement('select');
+  select.className = 'form-select network-select';
+
+  services.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    if (n === value) opt.selected = true;
+    select.appendChild(opt);
+  });
+
+  // If value set but not in current list, add it
+  if (value && !services.includes(value)) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = value;
+    opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn-remove-row';
+  removeBtn.type      = 'button';
+  removeBtn.innerHTML = '&times;';
+  removeBtn.title     = 'Remove';
+  removeBtn.addEventListener('click', () => row.remove());
+
+  const hidden = document.createElement('input');
+  hidden.type      = 'hidden';
+  hidden.className = 'network-value';
+  hidden.value     = select.value;
   select.addEventListener('change', () => { hidden.value = select.value; });
 
   row.appendChild(select);
@@ -1284,7 +1372,7 @@ function renderVolNetList(container, items, type) {
     }).map(svc => svc.name);
 
     const inUse = usedBy.length > 0;
-    const usedByHint = inUse ? `Used by: ${usedBy.join(', ')}` : '';
+    const usedByHint = inUse ? `Used by (${usedBy.length}): ${usedBy.join(', ')}` : '';
 
     return `
       <div class="volnet-item">
@@ -1372,11 +1460,80 @@ document.getElementById('btn-add-network').addEventListener('click', async () =>
   }
 });
 
+// ── Settings Modal ────────────────────────────────────────────
+document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+document.getElementById('settings-close').addEventListener('click', closeSettingsModal);
+document.getElementById('settings-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeSettingsModal();
+});
+
+async function openSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+  try {
+    const data = await apiFetch('/api/config');
+    document.getElementById('settings-compose-path').value = data.composePath || '';
+  } catch (err) {
+    toast(`Failed to load settings: ${err.message}`, 'error');
+  }
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('btn-save-settings').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save-settings');
+  const label = btn.querySelector('.btn-label');
+  const composePath = document.getElementById('settings-compose-path').value.trim();
+  if (!composePath) { toast('Path is required', 'error'); return; }
+
+  btn.disabled = true;
+  label.innerHTML = spinnerHtml();
+  try {
+    await apiFetch('/api/config', { method: 'PUT', body: JSON.stringify({ composePath }) });
+    toast('Settings saved', 'success');
+    closeSettingsModal();
+    await fetchStatus(true);
+  } catch (err) {
+    toast(`Failed to save settings: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    label.textContent = 'SAVE SETTINGS';
+  }
+});
+
 // ── History Modal ─────────────────────────────────────────────
 document.getElementById('btn-history').addEventListener('click', openHistoryModal);
 document.getElementById('history-close').addEventListener('click', closeHistoryModal);
 document.getElementById('history-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeHistoryModal();
+});
+
+document.getElementById('btn-clear-history').addEventListener('click', async () => {
+  const confirmed = await showConfirm({
+    title: 'CLEAR ALL HISTORY',
+    message: 'This will permanently delete all saved versions. This cannot be undone.',
+    confirmLabel: 'CLEAR ALL',
+    danger: true,
+  });
+  if (!confirmed) return;
+  const btn = document.getElementById('btn-clear-history');
+  const label = btn.querySelector('.btn-label');
+  btn.disabled = true;
+  label.innerHTML = spinnerHtml('spinner-sm');
+  try {
+    await apiFetch('/api/history', { method: 'DELETE' });
+    toast('History cleared', 'success');
+    renderHistoryList([]);
+    document.getElementById('history-preview').innerHTML = '<div class="history-preview-empty">Select a version to preview</div>';
+  } catch (err) {
+    toast(`Failed to clear history: ${err.message}`, 'error');
+  } finally {
+    btn.disabled = false;
+    label.textContent = 'CLEAR ALL';
+  }
 });
 
 async function openHistoryModal() {
@@ -1489,6 +1646,8 @@ document.addEventListener('keydown', e => {
       closeHistoryModal();
     } else if (!document.getElementById('volnet-modal').classList.contains('hidden')) {
       closeVolNetModal();
+    } else if (!document.getElementById('settings-modal').classList.contains('hidden')) {
+      closeSettingsModal();
     } else if (state.view === 'yaml') {
       switchView('cards');
     }
@@ -1504,7 +1663,8 @@ function isAnyModalOpen() {
     || !document.getElementById('edit-modal').classList.contains('hidden')
     || !document.getElementById('add-modal').classList.contains('hidden')
     || !document.getElementById('history-modal').classList.contains('hidden')
-    || !document.getElementById('volnet-modal').classList.contains('hidden');
+    || !document.getElementById('volnet-modal').classList.contains('hidden')
+    || !document.getElementById('settings-modal').classList.contains('hidden');
 }
 
 function startAutoRefresh(intervalMs = 10000) {

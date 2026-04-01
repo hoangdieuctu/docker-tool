@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DOCKER TOOL</title>
+  <title>Dockers</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -17,7 +18,7 @@
     <div class="header-left">
       <div class="header-brand">
         <span class="header-title">DOCKER TOOL</span>
-        <span class="header-version">v1.0.0</span>
+        <span class="header-version">v1.0.1</span>
       </div>
       <div class="header-meta" id="header-meta">
         <span class="meta-dot"></span>
@@ -42,6 +43,9 @@
       </button>
       <button class="btn btn-secondary" id="btn-history" title="Version history">
         <span class="btn-label">HISTORY</span>
+      </button>
+      <button class="btn btn-secondary" id="btn-settings" title="Settings">
+        <span class="btn-label">SETTINGS</span>
       </button>
     </div>
   </header>
@@ -124,6 +128,19 @@
           <input type="text" class="form-input" id="edit-image" placeholder="nginx:latest" />
         </div>
         <div class="form-group">
+          <label class="form-label">PLATFORM</label>
+          <select class="form-select" id="edit-platform">
+            <option value="">— not set —</option>
+            <option value="linux/amd64">linux/amd64</option>
+            <option value="linux/arm64">linux/arm64</option>
+            <option value="linux/arm/v7">linux/arm/v7</option>
+            <option value="linux/arm/v6">linux/arm/v6</option>
+            <option value="windows/amd64">windows/amd64</option>
+            <option value="darwin/amd64">darwin/amd64</option>
+            <option value="darwin/arm64">darwin/arm64</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">CONTAINER NAME</label>
           <input type="text" class="form-input" id="edit-container-name" placeholder="Optional container name override" />
         </div>
@@ -156,6 +173,15 @@
           <label class="form-label">NETWORKS</label>
           <div class="dynamic-list" id="edit-networks-list"></div>
           <button class="btn-add-row" id="btn-add-network-join">+ ADD NETWORK</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WORKING DIR</label>
+          <input type="text" class="form-input" id="edit-working-dir" placeholder="/app" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DEPENDS ON</label>
+          <div class="dynamic-list" id="edit-depends-on-list"></div>
+          <button class="btn-add-row" id="btn-add-depends-on">+ ADD DEPENDENCY</button>
         </div>
         <div class="form-group">
           <label class="form-label">RESTART POLICY</label>
@@ -199,6 +225,19 @@
           <input type="text" class="form-input" id="add-image" placeholder="nginx:latest" />
         </div>
         <div class="form-group">
+          <label class="form-label">PLATFORM</label>
+          <select class="form-select" id="add-platform">
+            <option value="">— not set —</option>
+            <option value="linux/amd64">linux/amd64</option>
+            <option value="linux/arm64">linux/arm64</option>
+            <option value="linux/arm/v7">linux/arm/v7</option>
+            <option value="linux/arm/v6">linux/arm/v6</option>
+            <option value="windows/amd64">windows/amd64</option>
+            <option value="darwin/amd64">darwin/amd64</option>
+            <option value="darwin/arm64">darwin/arm64</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label class="form-label">CONTAINER NAME</label>
           <input type="text" class="form-input" id="add-container-name" placeholder="Optional container name override" />
         </div>
@@ -231,6 +270,15 @@
           <label class="form-label">NETWORKS</label>
           <div class="dynamic-list" id="add-networks-list"></div>
           <button class="btn-add-row" id="btn-add-network-new">+ ADD NETWORK</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WORKING DIR</label>
+          <input type="text" class="form-input" id="add-working-dir" placeholder="/app" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DEPENDS ON</label>
+          <div class="dynamic-list" id="add-depends-on-list"></div>
+          <button class="btn-add-row" id="btn-add-depends-on-new">+ ADD DEPENDENCY</button>
         </div>
         <div class="form-group">
           <label class="form-label">RESTART POLICY</label>
@@ -303,7 +351,12 @@
     <div class="modal modal-history">
       <div class="modal-header">
         <span class="modal-title" id="history-modal-title">VERSION HISTORY</span>
-        <button class="modal-close" id="history-close" aria-label="Close">&times;</button>
+        <div class="modal-header-actions">
+          <button class="btn btn-danger btn-sm" id="btn-clear-history">
+            <span class="btn-label">CLEAR ALL</span>
+          </button>
+          <button class="modal-close" id="history-close" aria-label="Close">&times;</button>
+        </div>
       </div>
       <div class="history-body">
         <div class="history-list" id="history-list">
@@ -325,6 +378,28 @@
       <div class="confirm-actions">
         <button class="btn btn-secondary" id="confirm-cancel">CANCEL</button>
         <button class="btn" id="confirm-ok"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay hidden" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div class="modal modal-edit">
+      <div class="modal-header">
+        <span class="modal-title" id="settings-modal-title">SETTINGS</span>
+        <button class="modal-close" id="settings-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="settings-modal-body">
+        <div class="form-group">
+          <label class="form-label">DOCKER COMPOSE FILE PATH</label>
+          <input type="text" class="form-input" id="settings-compose-path" placeholder="/path/to/docker-compose.yml" spellcheck="false" />
+          <span style="font-size:0.68rem;color:var(--text-dim);margin-top:4px;">Absolute path to the docker-compose.yml file</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success" id="btn-save-settings">
+          <span class="btn-label">SAVE SETTINGS</span>
+        </button>
       </div>
     </div>
   </div>

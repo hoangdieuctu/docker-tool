@@ -1,12 +1,21 @@
 const { execFile } = require('child_process');
 const path = require('path');
+const appConfig = require('./config');
 
-const COMPOSE_DIR = path.resolve(__dirname, '..');
+function getComposeArgs() {
+  const composePath = appConfig.load().composePath;
+  return ['--file', composePath];
+}
+
+function getComposeDir() {
+  const composePath = appConfig.load().composePath;
+  return path.dirname(composePath);
+}
 
 function run(args, options = {}) {
   return new Promise((resolve, reject) => {
-    execFile('docker', ['compose', ...args], {
-      cwd: COMPOSE_DIR,
+    execFile('docker', ['compose', ...getComposeArgs(), ...args], {
+      cwd: getComposeDir(),
       timeout: options.timeout || 30000,
     }, (err, stdout, stderr) => {
       if (err) {

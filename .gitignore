@@ -4,6 +4,8 @@ db2/
 db3/
 db4/
 compose-history.json
+compose-history-*.json
+app-config.json
 .claude/
 claude.md
 *.log

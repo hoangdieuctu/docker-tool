@@ -3,12 +3,36 @@ const path = require('path');
 const compose = require('./compose');
 const docker = require('./docker');
 const history = require('./history');
+const config = require('./config');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+// --- Config ---
+
+app.get('/api/config', (req, res) => {
+  res.json(config.load());
+});
+
+app.put('/api/config', (req, res) => {
+  try {
+    const { composePath } = req.body;
+    if (!composePath || typeof composePath !== 'string') {
+      return res.status(400).json({ error: 'composePath is required' });
+    }
+    const fs = require('fs');
+    if (!fs.existsSync(composePath)) {
+      return res.status(400).json({ error: `File not found: ${composePath}` });
+    }
+    const updated = config.save({ composePath });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- Status ---
 
@@ -247,6 +271,15 @@ app.get('/api/stats', async (req, res) => {
 app.get('/api/history', (req, res) => {
   try {
     res.json({ versions: history.list() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/history', (req, res) => {
+  try {
+    history.clear();
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

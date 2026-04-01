@@ -2,11 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const history = require('./history');
+const config = require('./config');
 
-const COMPOSE_FILE = path.resolve(__dirname, '../docker-compose.yml');
+function getComposePath() {
+  return config.load().composePath;
+}
 
 function read() {
-  const raw = fs.readFileSync(COMPOSE_FILE, 'utf8');
+  const raw = fs.readFileSync(getComposePath(), 'utf8');
   return { parsed: yaml.load(raw), raw };
 }
 
@@ -14,7 +17,7 @@ function write(rawYaml, label = 'Manual YAML edit') {
   yaml.load(rawYaml); // validate
   const { raw: previous } = read();
   history.snapshot(previous, label);
-  fs.writeFileSync(COMPOSE_FILE, rawYaml, 'utf8');
+  fs.writeFileSync(getComposePath(), rawYaml, 'utf8');
 }
 
 function getServices() {
@@ -36,6 +39,11 @@ function getServices() {
       : [],
     restart: config.restart || null,
     command: config.command || null,
+    depends_on: config.depends_on
+      ? (Array.isArray(config.depends_on) ? config.depends_on : Object.keys(config.depends_on))
+      : [],
+    working_dir: config.working_dir || null,
+    platform: config.platform || null,
   }));
 }
 
@@ -45,7 +53,7 @@ function updateService(serviceName, updates) {
     throw new Error(`Service "${serviceName}" not found`);
   }
 
-  const allowedFields = ['image', 'container_name', 'ports', 'expose', 'environment', 'env_file', 'volumes', 'networks', 'restart', 'command'];
+  const allowedFields = ['image', 'container_name', 'ports', 'expose', 'environment', 'env_file', 'volumes', 'networks', 'restart', 'command', 'depends_on', 'working_dir', 'platform'];
   for (const [key, value] of Object.entries(updates)) {
     if (!allowedFields.includes(key)) {
       throw new Error(`Field "${key}" is not editable`);
