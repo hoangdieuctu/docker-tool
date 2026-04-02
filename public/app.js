@@ -13,6 +13,7 @@ const state = {
   loading: true,         // Initial page load
   view: 'cards',         // 'cards' | 'yaml'
   search: '',            // Search filter string
+  statusFilter: 'all',  // 'all' | 'running' | 'stopped'
   actionLoading: {},     // { "serviceName:action": true }
   logsModal: {
     open: false,
@@ -251,6 +252,7 @@ function renderCard(svc) {
         ${renderCardBtn(svc.name, 'stop',    'STOP',    'card-btn-stop',    isStopped)}
         ${renderCardBtn(svc.name, 'restart', 'RESTART', 'card-btn-restart', false)}
         ${renderCardBtn(svc.name, 'logs',    'LOGS',    'card-btn-logs',    false)}
+        ${renderCardBtn(svc.name, 'config',  'VIEW',    'card-btn-config',  false)}
         ${renderCardBtn(svc.name, 'copy',    'COPY',    'card-btn-copy',    false)}
         ${renderCardBtn(svc.name, 'edit',    'EDIT',    'card-btn-edit',    isRunning)}
       </div>
@@ -321,12 +323,18 @@ function renderCards() {
   }
 
   const q = state.search.toLowerCase();
-  const filtered = q
+  let filtered = q
     ? state.services.filter(s =>
         s.name.toLowerCase().includes(q) ||
         (s.image || '').toLowerCase().includes(q)
       )
     : state.services;
+
+  if (state.statusFilter === 'running') {
+    filtered = filtered.filter(s => s.state === 'running');
+  } else if (state.statusFilter === 'stopped') {
+    filtered = filtered.filter(s => s.state !== 'running');
+  }
 
   if (filtered.length === 0) {
     grid.innerHTML = `
@@ -367,6 +375,10 @@ async function handleCardAction(serviceName, action) {
 
   if (action === 'logs') {
     openLogsModal(serviceName);
+    return;
+  }
+  if (action === 'config') {
+    openConfigModal(serviceName);
     return;
   }
   if (action === 'edit') {
@@ -616,6 +628,54 @@ document.getElementById('btn-refresh-logs').addEventListener('click', () => {
 });
 document.getElementById('logs-modal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeLogsModal();
+});
+
+// ── Config Modal ──────────────────────────────────────────────
+function openConfigModal(serviceName) {
+  const svc = state.services.find(s => s.name === serviceName);
+  if (!svc) return;
+
+  document.getElementById('config-modal-title').textContent = serviceName;
+  document.getElementById('config-image').value         = svc.image || '';
+  document.getElementById('config-platform').value      = svc.platform || '';
+  document.getElementById('config-container-name').value = svc.container_name || '';
+  document.getElementById('config-working-dir').value   = svc.working_dir || '';
+  document.getElementById('config-restart').value       = svc.restart || '';
+  document.getElementById('config-command').value       = Array.isArray(svc.command)
+    ? svc.command.join(' ')
+    : (svc.command || '');
+
+  renderReadonlyList('config-ports-list',     formatPorts(svc.ports || []));
+  renderReadonlyList('config-expose-list',    (svc.expose || []).map(String));
+  renderReadonlyList('config-env-list',       normalizeEnv(svc.environment));
+  renderReadonlyList('config-envfile-list',   (svc.env_file || []).map(String));
+  renderReadonlyList('config-volumes-list',   (svc.volumes || []).map(String));
+  renderReadonlyList('config-networks-list',  Array.isArray(svc.networks) ? svc.networks.map(String) : []);
+  renderReadonlyList('config-depends-on-list', (svc.depends_on || []).map(String));
+
+  document.getElementById('config-modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderReadonlyList(containerId, items) {
+  const container = document.getElementById(containerId);
+  if (!items.length) {
+    container.innerHTML = '<span style="color:var(--text-dim);font-size:0.75rem;">—</span>';
+    return;
+  }
+  container.innerHTML = items.map(item =>
+    `<div class="dynamic-row"><input type="text" class="form-input" value="${escapeHtml(item)}" readonly /></div>`
+  ).join('');
+}
+
+function closeConfigModal() {
+  document.getElementById('config-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('config-modal-close').addEventListener('click', closeConfigModal);
+document.getElementById('config-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeConfigModal();
 });
 
 // ── Edit Modal ────────────────────────────────────────────────
@@ -1637,6 +1697,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (!document.getElementById('logs-modal').classList.contains('hidden')) {
       closeLogsModal();
+    } else if (!document.getElementById('config-modal').classList.contains('hidden')) {
+      closeConfigModal();
     } else if (!document.getElementById('edit-modal').classList.contains('hidden')) {
       closeEditModal();
     } else if (!document.getElementById('add-modal').classList.contains('hidden')) {
@@ -1660,6 +1722,7 @@ let autoStatsTimer = null;
 
 function isAnyModalOpen() {
   return !document.getElementById('logs-modal').classList.contains('hidden')
+    || !document.getElementById('config-modal').classList.contains('hidden')
     || !document.getElementById('edit-modal').classList.contains('hidden')
     || !document.getElementById('add-modal').classList.contains('hidden')
     || !document.getElementById('history-modal').classList.contains('hidden')
@@ -1692,6 +1755,16 @@ function startStatsAutoRefresh(intervalMs = 5000) {
 document.getElementById('service-search').addEventListener('input', e => {
   state.search = e.target.value.trim();
   renderCards();
+});
+
+// ── Status Filter ─────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.statusFilter = btn.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards();
+  });
 });
 
 // ── Init ─────────────────────────────────────────────────────

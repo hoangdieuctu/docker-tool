@@ -59,6 +59,11 @@
       <div class="toolbar">
         <div class="toolbar-left">
           <span class="toolbar-label" id="running-count">loading...</span>
+          <div class="filter-btns">
+            <button class="filter-btn active" data-filter="all">ALL</button>
+            <button class="filter-btn" data-filter="running">RUNNING</button>
+            <button class="filter-btn" data-filter="stopped">STOPPED</button>
+          </div>
         </div>
         <div class="toolbar-center">
           <input type="text" class="search-input" id="service-search" placeholder="SEARCH SERVICES..." autocomplete="off" spellcheck="false" />
@@ -405,6 +410,70 @@
   </div>
 
   <!-- Toast Container -->
+  <!-- Config Modal -->
+  <div class="modal-overlay hidden" id="config-modal" role="dialog" aria-modal="true">
+    <div class="modal modal-config">
+      <div class="modal-header">
+        <span class="modal-title">CONFIG — <span id="config-modal-title"></span></span>
+        <button class="modal-close" id="config-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">IMAGE</label>
+          <input type="text" class="form-input" id="config-image" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PLATFORM</label>
+          <input type="text" class="form-input" id="config-platform" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CONTAINER NAME</label>
+          <input type="text" class="form-input" id="config-container-name" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PORTS</label>
+          <div class="dynamic-list" id="config-ports-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EXPOSE</label>
+          <div class="dynamic-list" id="config-expose-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENVIRONMENT</label>
+          <div class="dynamic-list" id="config-env-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ENV FILE</label>
+          <div class="dynamic-list" id="config-envfile-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">VOLUMES</label>
+          <div class="dynamic-list" id="config-volumes-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">NETWORKS</label>
+          <div class="dynamic-list" id="config-networks-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">WORKING DIR</label>
+          <input type="text" class="form-input" id="config-working-dir" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DEPENDS ON</label>
+          <div class="dynamic-list" id="config-depends-on-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">RESTART POLICY</label>
+          <input type="text" class="form-input" id="config-restart" readonly />
+        </div>
+        <div class="form-group">
+          <label class="form-label">COMMAND</label>
+          <input type="text" class="form-input" id="config-command" readonly />
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
   <script src="app.js"></script>

@@ -391,6 +391,34 @@ body {
   text-transform: uppercase;
 }
 
+.filter-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.filter-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.filter-btn:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.filter-btn.active {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
 /* ── Cards Grid ──────────────────────────────────────────────── */
 .cards-grid {
   display: grid;
@@ -820,6 +848,11 @@ body {
 }
 
 .modal-edit {
+  width: 560px;
+  max-width: 100%;
+}
+
+.modal-config {
   width: 560px;
   max-width: 100%;
 }
