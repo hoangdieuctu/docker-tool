@@ -6,3 +6,4 @@ app-config.json
 claude.md
 *.log
 deploy.sh
+docker-compose.yml
