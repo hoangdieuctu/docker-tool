@@ -2,11 +2,12 @@
 set -euo pipefail
 
 APP_DIR="/opt/docker-tool"
+SRC_DIR="/deploy/github/docker-tool"
 PORT=3000
 SERVICE="docker-tool"
 
-echo "==> Pulling latest code..."
-sudo git -C "$APP_DIR" pull
+echo "==> Copying app..."
+sudo cp -r "$SRC_DIR"/. "$APP_DIR/"
 
 echo "==> Installing dependencies..."
 sudo npm install --prefix "$APP_DIR" --omit=dev
