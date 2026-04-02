@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dockers — Login</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-box {
+      width: 360px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .login-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .login-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text-primary);
+    }
+    .login-version {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      border: 1px solid var(--border-mid);
+      padding: 1px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .login-body {
+      padding: 24px 20px;
+    }
+    .login-error {
+      font-size: 0.75rem;
+      color: var(--red);
+      letter-spacing: 0.05em;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .login-error.visible { display: block; }
+    .login-btn {
+      width: 100%;
+      margin-top: 4px;
+      height: 34px;
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-header">
+        <span class="login-title">DOCKER TOOL</span>
+        <span class="login-version">v1.0.2</span>
+      </div>
+      <div class="login-body">
+        <div class="login-error" id="login-error">Invalid username or password</div>
+        <div class="form-group">
+          <label class="form-label">USERNAME</label>
+          <input type="text" class="form-input" id="login-username" autocomplete="off" autofocus />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PASSWORD</label>
+          <input type="password" class="form-input" id="login-password" autocomplete="new-password" />
+        </div>
+        <button class="btn btn-success login-btn" id="login-btn">
+          <span class="btn-label">LOGIN</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <script>
+    async function doLogin() {
+      const btn = document.getElementById('login-btn');
+      const label = btn.querySelector('.btn-label');
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const error = document.getElementById('login-error');
+
+      error.classList.remove('visible');
+      btn.disabled = true;
+      label.textContent = '...';
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+        if (res.ok) {
+          window.location.href = '/';
+        } else {
+          error.classList.add('visible');
+        }
+      } catch {
+        error.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+        label.textContent = 'LOGIN';
+      }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', doLogin);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>

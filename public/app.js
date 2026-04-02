@@ -45,6 +45,10 @@ async function apiFetch(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
     ...options,
   });
+  if (res.status === 401) {
+    window.location.href = '/login';
+    return;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.error || `HTTP ${res.status}`);
@@ -1765,6 +1769,12 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.classList.add('active');
     renderCards();
   });
+});
+
+// ── Logout ────────────────────────────────────────────────────
+document.getElementById('btn-logout').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
 });
 
 // ── Init ─────────────────────────────────────────────────────

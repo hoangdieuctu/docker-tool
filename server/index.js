@@ -1,5 +1,7 @@
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
 const compose = require('./compose');
 const docker = require('./docker');
 const history = require('./history');
@@ -8,8 +10,55 @@ const config = require('./config');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const AUTH_USER = process.env.AUTH_USER || 'admin';
+const AUTH_PASS = process.env.AUTH_PASS || 'admin';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'docker-tool-secret';
+
+// Pre-hash the password at startup
+const AUTH_PASS_HASH = bcrypt.hashSync(AUTH_PASS, 10);
+
 app.use(express.json());
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true, maxAge: 8 * 60 * 60 * 1000 }, // 8 hours
+}));
+
+// Serve login page without auth
+app.get('/login', (req, res) => {
+  if (req.session.authenticated) return res.redirect('/');
+  res.sendFile(path.join(__dirname, '../public/login.html'));
+});
+
+// Allow static assets needed by the login page
+app.use('/style.css',  express.static(path.join(__dirname, '../public/style.css')));
+app.use('/favicon.svg', express.static(path.join(__dirname, '../public/favicon.svg')));
+
+// Auth middleware — protects all other routes
+function requireAuth(req, res, next) {
+  if (req.session.authenticated) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Unauthorized' });
+  res.redirect('/login');
+}
+
+// Login
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (username === AUTH_USER && await bcrypt.compare(password, AUTH_PASS_HASH)) {
+    req.session.authenticated = true;
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.use(requireAuth);
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Logout
+app.post('/api/logout', (req, res) => {
+  req.session.destroy(() => res.json({ ok: true }));
+});
 
 // --- Config ---
 
