@@ -5,3 +5,4 @@ app-config.json
 .claude/
 claude.md
 *.log
+deploy.sh
