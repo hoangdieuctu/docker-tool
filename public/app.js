@@ -1473,8 +1473,8 @@ async function openSettingsModal() {
   try {
     const data = await apiFetch('/api/config');
     document.getElementById('settings-compose-path').value = data.composePath || '';
-  } catch (err) {
-    toast(`Failed to load settings: ${err.message}`, 'error');
+  } catch {
+    document.getElementById('settings-compose-path').value = '';
   }
 }
 
