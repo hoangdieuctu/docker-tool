@@ -6,4 +6,5 @@ app-config.json
 claude.md
 *.log
 deploy.sh
+deploy-mac.sh
 docker-compose.yml
