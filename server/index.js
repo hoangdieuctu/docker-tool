@@ -181,6 +181,20 @@ app.get('/api/compose/raw', (req, res) => {
   }
 });
 
+app.get('/api/compose/export', (req, res) => {
+  try {
+    const { raw } = compose.read();
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const date = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    res.setHeader('Content-Type', 'application/x-yaml');
+    res.setHeader('Content-Disposition', `attachment; filename="${date}-docker-compose.yml"`);
+    res.send(raw);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/compose/raw', (req, res) => {
   try {
     const { yaml: rawYaml } = req.body;

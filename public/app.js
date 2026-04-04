@@ -537,6 +537,9 @@ document.getElementById('btn-up-all').addEventListener('click', handleUpAll);
 document.getElementById('btn-down-all').addEventListener('click', handleDownAll);
 document.getElementById('btn-refresh').addEventListener('click', handleRefresh);
 document.getElementById('btn-raw-yaml').addEventListener('click', handleRawYaml);
+document.getElementById('btn-export').addEventListener('click', () => {
+  window.location.href = '/api/compose/export';
+});
 
 // ── View Switching ────────────────────────────────────────────
 function switchView(view) {
