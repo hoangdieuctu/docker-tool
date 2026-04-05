@@ -44,6 +44,7 @@ function getServices() {
       : [],
     working_dir: config.working_dir || null,
     platform: config.platform || null,
+    extra_hosts: config.extra_hosts || [],
   }));
 }
 
@@ -53,7 +54,7 @@ function updateService(serviceName, updates) {
     throw new Error(`Service "${serviceName}" not found`);
   }
 
-  const allowedFields = ['image', 'container_name', 'ports', 'expose', 'environment', 'env_file', 'volumes', 'networks', 'restart', 'command', 'depends_on', 'working_dir', 'platform'];
+  const allowedFields = ['image', 'container_name', 'ports', 'expose', 'environment', 'env_file', 'volumes', 'networks', 'restart', 'command', 'depends_on', 'working_dir', 'platform', 'extra_hosts'];
   for (const [key, value] of Object.entries(updates)) {
     if (!allowedFields.includes(key)) {
       throw new Error(`Field "${key}" is not editable`);

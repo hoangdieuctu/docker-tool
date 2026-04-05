@@ -658,6 +658,7 @@ function openConfigModal(serviceName) {
   renderReadonlyList('config-envfile-list',   (svc.env_file || []).map(String));
   renderReadonlyList('config-volumes-list',   (svc.volumes || []).map(String));
   renderReadonlyList('config-networks-list',  Array.isArray(svc.networks) ? svc.networks.map(String) : []);
+  renderReadonlyList('config-extra-hosts-list', (svc.extra_hosts || []).map(String));
   renderReadonlyList('config-depends-on-list', (svc.depends_on || []).map(String));
 
   document.getElementById('config-modal').classList.remove('hidden');
@@ -737,6 +738,9 @@ async function openEditModal(serviceName) {
   const nets = Array.isArray(svc.networks) ? svc.networks.map(String) : [];
   renderDynamicList('edit-networks-list', nets, 'network');
 
+  // Extra hosts
+  renderDynamicList('edit-extra-hosts-list', (svc.extra_hosts || []).map(String), 'extrahost');
+
   // Depends on
   renderDynamicList('edit-depends-on-list', (svc.depends_on || []).map(String), 'dependson');
 
@@ -790,6 +794,9 @@ document.getElementById('btn-add-network-join').addEventListener('click', () => 
 });
 document.getElementById('btn-add-depends-on').addEventListener('click', () => {
   addDynamicRow('edit-depends-on-list', 'dependson');
+});
+document.getElementById('btn-add-extra-host').addEventListener('click', () => {
+  addDynamicRow('edit-extra-hosts-list', 'extrahost');
 });
 
 // ── Validation ───────────────────────────────────────────────
@@ -948,6 +955,7 @@ document.getElementById('btn-save-edit').addEventListener('click', async () => {
   const volumes  = getDynamicListValues('edit-volumes-list');
   const networks = getDynamicListValues('edit-networks-list');
   const dependsOn = getDynamicListValues('edit-depends-on-list');
+  const extraHosts = getDynamicListValues('edit-extra-hosts-list');
 
   const body = {};
   if (image)         body.image          = image;
@@ -971,6 +979,8 @@ document.getElementById('btn-save-edit').addEventListener('click', async () => {
   else                  body.networks    = null;
   if (dependsOn.length) body.depends_on  = dependsOn;
   else                  body.depends_on  = null;
+  if (extraHosts.length) body.extra_hosts = extraHosts;
+  else                   body.extra_hosts = null;
   if (workingDir)       body.working_dir = workingDir;
   else                  body.working_dir = null;
 
@@ -1128,6 +1138,9 @@ document.getElementById('btn-add-network-new').addEventListener('click', () => {
 document.getElementById('btn-add-depends-on-new').addEventListener('click', () => {
   addDynamicRow('add-depends-on-list', 'dependson');
 });
+document.getElementById('btn-add-extra-host-new').addEventListener('click', () => {
+  addDynamicRow('add-extra-hosts-list', 'extrahost');
+});
 document.getElementById('btn-add-envfile-new').addEventListener('click', () => {
   addDynamicRow('add-envfile-list', 'envfile');
 });
@@ -1150,6 +1163,7 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
   const volumes  = getDynamicListValues('add-volumes-list');
   const networks = getDynamicListValues('add-networks-list');
   const dependsOn = getDynamicListValues('add-depends-on-list');
+  const extraHosts = getDynamicListValues('add-extra-hosts-list');
 
   if (!name) { toast('Service name is required', 'error'); return; }
   if (!image) { toast('Image is required', 'error'); return; }
@@ -1170,6 +1184,7 @@ document.getElementById('btn-create-service').addEventListener('click', async ()
   if (volumes.length)  body.volumes     = volumes;
   if (networks.length) body.networks    = networks;
   if (dependsOn.length) body.depends_on = dependsOn;
+  if (extraHosts.length) body.extra_hosts = extraHosts;
   if (workingDir)       body.working_dir = workingDir;
 
   btn.disabled = true;
@@ -1228,7 +1243,7 @@ function createDynamicRow(value, type) {
     return createDependsOnRow(value, row);
   }
 
-  const placeholder = type === 'port' ? '8080:80' : type === 'expose' ? '8080' : type === 'dependson' ? 'service-name' : 'KEY=value';
+  const placeholder = type === 'port' ? '8080:80' : type === 'expose' ? '8080' : type === 'dependson' ? 'service-name' : type === 'extrahost' ? 'hostname:ip' : 'KEY=value';
 
   const input = document.createElement('input');
   input.type        = 'text';

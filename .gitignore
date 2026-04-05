@@ -8,3 +8,4 @@ claude.md
 deploy.sh
 deploy-mac.sh
 docker-compose.yml
+.idea
